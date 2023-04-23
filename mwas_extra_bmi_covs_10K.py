@@ -337,14 +337,14 @@ def merge_mwases():
     cov_groups = ['drugs', 'diet', 'exercise']
     covs_mwas_dir = FIGS_DIR.joinpath("MWAS")
 
-    df = pd.read_csv(covs_mwas_dir.joinpath(f"mb_gwas_w_{cov_groups[0]}.csv"), index_col=[0, 1, 2, 3])
+    df = pd.read_csv(covs_mwas_dir.joinpath(f"mb_gwas_w_{cov_groups[0]}.csv"), index_col=[0,1,2,3])
     summary_df = pd.DataFrame(index=df.index, columns=[f'changed_w_{g}_covs' for g in cov_groups])
 
     for g in cov_groups:
-        w_mwas = pd.read_csv(covs_mwas_dir.joinpath(f"mb_gwas_w_{g}.csv"), index_col=[0, 1, 2, 3])
-        wo_mwas = pd.read_csv(covs_mwas_dir.joinpath(f"mb_gwas_wo_{g}.csv"), index_col=[0, 1, 2, 3])
+        w_mwas = pd.read_csv(covs_mwas_dir.joinpath(f"mb_gwas_w_{g}.csv"), index_col=[0,1,2,3])
+        wo_mwas = pd.read_csv(covs_mwas_dir.joinpath(f"mb_gwas_wo_{g}.csv"), index_col=[0,1,2,3])
         merged = w_mwas.merge(wo_mwas[['Pval', 'N']], how='left', left_index=True, right_index=True, suffixes=('', '_wo_extra_covs'))
-        merged = merged.sort_index()
+        merged = merged.drop(columns=['Y_Bonferroni', 'Global_Bonferroni']).sort_index()
         assert merged['N'].equals(merged['N_wo_extra_covs'])
 
         merged['sig_wo'] = merged['Pval_wo_extra_covs'] < bonferroni
