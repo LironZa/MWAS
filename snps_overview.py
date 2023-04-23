@@ -89,7 +89,7 @@ def bar_sig_per_species(full_snps_df):
 
     ### another plot for tested SNPs by species, same species (and same order)
     fig, ax = plt.subplots(1, 1, figsize=(7.4, 3))
-    sig_snps_per_species = snps_per_species
+    sig_snps_per_species = snps_per_species.copy()
     snps_per_species = full_snps_df.groupby('Species').size()
     snps_per_species = snps_per_species.loc[sig_snps_per_species.index]
     print(snps_per_species)
@@ -107,4 +107,8 @@ def bar_sig_per_species(full_snps_df):
     plt.savefig(FIGS_DIR.joinpath(f"barplot_tested_snps_per_species.png"), dpi=DPI, bbox_inches='tight')
     plt.close(fig)
 
+    df = snps_per_species.to_frame('Tested SNPs').merge(sig_snps_per_species.to_frame('BMI- associated SNPs'),
+                                                        how='left', left_index=True, right_index=True)
+    df = df.merge(post_clump_counts['first_clumping'].to_frame('Post-clumping SNPs'), how='left', left_index=True, right_index=True)
+    df.to_csv(FIGS_DIR.joinpath('snps_per_species.csv'))
     return
