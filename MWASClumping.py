@@ -165,10 +165,10 @@ def create_annotated_linked_SNPs_df(corr_thresh_r):
     ## load the annotated SNPs DF (significant only, but w/o clumping)
     annotated = pd.read_csv(MWAS_DIR.joinpath('snp_annotations', 'snp_annotations.csv'), index_col=[0,1,2,3]). \
         drop(columns=['Coef', 'min_mn', 'maj_mn', 'min_n', 'maj_n',
-                      'seed_eggNOG_ortholog', 'eggNOG OGs', 'MajorAllele', 'MinorAllele',
-                      'ID', 'narr_og_name', 'narr_og_cat', 'best_og_name', 'best_og_cat', 'GOs', 'EC',
-                      'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass', 'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction',
-                      'taxa', 'KEGG_ko', 'KEGG_Pathway',
+                      'seed_eggNOG_ortholog', 'eggNOG OGs', 'MajorAllele', 'MinorAllele', ## 'best_og_cat',
+                      'ID', 'narr_og_name', 'narr_og_cat', 'best_og_name', 'GOs', 'EC',
+                      'KEGG_Reaction', 'KEGG_rclass', 'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction',
+                      'taxa', 'KEGG_Pathway', ## 'KEGG_Module', 'KEGG_ko',
                       'abs_means_diff', 'snp_desc', 'seed_ortholog_evalue', 'seed_ortholog_score', 'IsSynonymous'])
 
     ## for each SNP that survived the clumping and has [n_correlated_snps > 0], get the list of SNPs linked to it
@@ -183,13 +183,15 @@ def create_annotated_linked_SNPs_df(corr_thresh_r):
         linked_list_txt = [snp.strip('), ') for snp in linked_list_txt][1:]  # [1:] b/c the first item is ''
         linked_list = [(y, species_id, '_'.join(snp.split(', ')[0].strip("'").split('_')[:2]), int(snp.split(', ')[1]))
                        for snp in linked_list_txt]
+        ## add the original SNP to the table
+        linked_list = [(y, species_id, '_'.join(row['Contig'].split('_')[:2]), row['Position'])] + linked_list
 
         ## get the annotations of the SNPs from the annotated_df
         annotated_linked_snps = annotated.loc[linked_list]
 
         ## save an annotated SNPs df for all the SNPs linked to the current SNP (name file with the representative SNP's id)
         annotated_linked_snps.to_csv(output_dir.joinpath(
-            f'{species_id}_{"_".join(row["Contig"].split("_")[:2])}_{row["Position"]}.csv'))
+            f'{species_id}_{"_".join(row["Contig"].split("_")[:2])}_{row["Position"]}_exp.csv'))
 
         ## add updownstream data?
     return

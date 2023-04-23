@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from LabData import config_global as config
 from scipy import stats
+import matplotlib.pyplot as plt
 from LabData.DataAnalyses.MBSNPs.taxonomy import taxonomy_df
 
 
@@ -70,6 +71,39 @@ def test_one_phen_all_species(phen, mb_gwas_df_p, name=''):
     results.to_csv(FIGS_DIR.joinpath(f'species_composition_{name}_{phen}.csv'))
     return
 
+
+def plot_associated_species():
+    # load the results of associated species
+    ra_assoc = pd.read_csv(FIGS_DIR.joinpath('species_composition_log10abundance_bmi.csv'))
+    ra_assoc['is_assoc'] = ra_assoc['bonferroni_bmi'] <= .05
+
+    # plot & save pie chart
+    fsize = 7
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 2.5), gridspec_kw={'wspace': .25})
+    ax.pie([(~ra_assoc['is_assoc']).sum(), ra_assoc['is_assoc'].sum()],
+           labels=['Species\nnot correlated', 'Species\ncorrelated'],
+           colors=["#5a4e69", c.light_grey],  ### "#8C3F54"
+           startangle=90, counterclock=False, autopct=lambda x: int(np.round((x/100)*len(ra_assoc))),
+           textprops={'size': fsize})
+    plt.savefig(FIGS_DIR.joinpath("associated_species.png"), dpi=300, bbox_inches='tight')
+    plt.close(fig)
+
+    # load the post-clumping results, merge with associated species
+    sig_snps = pd.read_csv(BASE_DIR.joinpath('20220402_234043_mwas_bmi_10K', 'clumped_mb_gwas_0.3.csv'))
+    sig_snps = sig_snps.merge(ra_assoc, how='left', left_on='Species', right_on='Species', suffixes=('_snps', ''))
+
+    # plot pie chart
+    fig, ax = plt.subplots(1, 1, figsize=(4, 2.5), gridspec_kw={'wspace': .25})
+    ax.pie([(~sig_snps['is_assoc']).sum(), sig_snps['is_assoc'].sum()],
+           labels=['SNPs\nof species\nnot correlated', 'SNPs\nof species\ncorrelated'],
+           colors=["#5a4e69", c.light_grey],  ### "#8C3F54"
+           startangle=90, counterclock=False, autopct=lambda x: int(np.round((x/100)*len(sig_snps))),
+           textprops={'size': fsize})
+    plt.savefig(FIGS_DIR.joinpath("snps_of_associated_species.png"), dpi=300, bbox_inches='tight')
+    plt.close(fig)
+
+    return
 
 
 if __name__ == '__main__':

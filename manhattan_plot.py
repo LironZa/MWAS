@@ -280,9 +280,7 @@ def draw_annotated_manhattan_plot(df: pd.DataFrame, out_file: str = None, figsiz
     min_pval = min(df[pval_col].min(), bonn_5_line)
     min_pval_in_fig = min_pval * 10 ** (0.1 * np.log10(min_pval)) # Add 10% white space above
     ax_man.set_ylim([1, min_pval_in_fig])
-    ticks_major = max(np.log10(min_pval_in_fig) // 6, -30)
-    if ticks_major < -5:
-        ticks_major = 5 * np.floor(ticks_major / 5)
+    ticks_major = -2
     ax_man.set_yticks([10**i for i in np.arange(0, np.log10(min_pval_in_fig), ticks_major)])
     ax_man.set_ylabel('P-value', fontsize=axis_labels_fs)#, labelpad=2)
     ax_man.tick_params(axis='x', bottom=False, labelbottom=False)

@@ -58,4 +58,53 @@ def hist_N_per_snp(full_snps_df):
     return
 
 
+def bar_sig_per_species(full_snps_df):
+    sig_snps_df = full_snps_df.loc[full_snps_df['Global_Bonferroni'] <= .05]
 
+    fig, ax = plt.subplots(1, 1, figsize=(7.4, 3))
+    snps_per_species = sig_snps_df.groupby('Species').size().sort_values(ascending=False)
+    print(snps_per_species)
+    ax.bar(range(len(snps_per_species)), snps_per_species, tick_label=snps_per_species.index.values, log=True, color=data_1_c, alpha=.8)
+    ax.set_ylabel('Number of BMI-associated SNPs', fontsize=TICK_FS)
+    ax.set_xlim(-0.5, len(snps_per_species) - .05)
+    from matplotlib.ticker import ScalarFormatter
+    ax.yaxis.set_major_formatter(ScalarFormatter())
+    # from matplotlib import ticker
+    # ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: '{:g}'.format(y) if y<100 else ))
+    ax.tick_params(axis='y', labelsize=TICK_FS)
+    ax.tick_params(axis='x', labelsize=TICK_FS, bottom=False)
+    plt.xticks(rotation='vertical')
+
+    #### add the number of post-clumping SNPs
+    post_clump_counts = pd.read_csv(BASE_DIR.joinpath('Figures', 'first_clumping_counts.csv'), index_col=[0])  ## count de novo?
+    ## order the same
+    post_clump_counts = post_clump_counts.loc[snps_per_species.index]
+    ## add numbers to the plot
+    for i, rep in enumerate(snps_per_species.index):
+        ax.text(x=i, y=1, s=post_clump_counts.loc[rep, 'first_clumping'], va='top', ha='center', color='white', size=TICK_FS)
+        ax.text(x=i, y=snps_per_species.loc[rep], s=snps_per_species.loc[rep], va='bottom', ha='center', color='black', size=TICK_FS)
+
+    plt.savefig(FIGS_DIR.joinpath(f"barplot_significant_snps_per_species.png"), dpi=DPI, bbox_inches='tight')
+    plt.close(fig)
+
+    ### another plot for tested SNPs by species, same species (and same order)
+    fig, ax = plt.subplots(1, 1, figsize=(7.4, 3))
+    sig_snps_per_species = snps_per_species
+    snps_per_species = full_snps_df.groupby('Species').size()
+    snps_per_species = snps_per_species.loc[sig_snps_per_species.index]
+    print(snps_per_species)
+    ax.bar(range(len(snps_per_species)), snps_per_species, tick_label=snps_per_species.index.values, log=True, color=data_1_c, alpha=.8)
+    ax.set_ylabel('Number of tested SNPs', fontsize=TICK_FS)
+    ax.set_xlim(-0.5, len(snps_per_species) - .05)
+    ax.tick_params(axis='y', labelsize=TICK_FS)
+    ax.tick_params(axis='x', labelsize=TICK_FS, bottom=False)
+    plt.xticks(rotation='vertical')
+
+    ## add numbers to the plot
+    for i, rep in enumerate(snps_per_species.index):
+        ax.text(x=i, y=snps_per_species.loc[rep], s=snps_per_species.loc[rep], va='bottom', ha='center', color='black', size=TICK_FS)
+
+    plt.savefig(FIGS_DIR.joinpath(f"barplot_tested_snps_per_species.png"), dpi=DPI, bbox_inches='tight')
+    plt.close(fig)
+
+    return

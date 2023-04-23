@@ -185,7 +185,7 @@ def fix_data_vecs_df(data_vecs_df, samples_inds='SampleName'):
 
 ######################################################################
 
-def plot_top_four_snps(phen, workdir, data_file_suffix='', samples_inds='SampleName'):
+def plot_top_four_snps(phen, workdir, data_file_suffix='', samples_inds='SampleName', by='mixed'): #TODO: by = 'pval' / 'mixed'
     output_dir = workdir.joinpath(f'maf_plots/')
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -196,12 +196,20 @@ def plot_top_four_snps(phen, workdir, data_file_suffix='', samples_inds='SampleN
     data_vecs_df = fix_data_vecs_df(data_vecs_df, samples_inds=samples_inds)
 
     # SNPs annotations
-    # annots_df = pd.read_csv(workdir.joinpath('snp_annotations', 'snp_annotations.csv')).set_index(['Species', 'Contig', 'Position'])
     annots_df = pd.read_csv(workdir.joinpath('snp_annotations', 'annotated_clumped_0.3.csv')).set_index(['Species', 'Contig', 'Position'])
     annots_df = annots_df.loc[data_vecs_df.index.droplevel([samples_inds]).drop_duplicates()]
 
-    # choose top 4 SNPs to plot
-    annots_df = annots_df.sort_values('Pval', ascending=True).head(4)
+    if by == 'pval':
+        ###  choose top 4 SNPs to plot based on p-value
+        annots_df = annots_df.sort_values('Pval', ascending=True).head(4)
+    if by == 'mixed':
+        ###  choose top 4 SNPs to plot based on p-value + effect size
+        annots_df_pval = annots_df.sort_values('Pval', ascending=True).head(2)
+        annots_df_effect = annots_df.sort_values('abs_means_diff', ascending=False).head(2)
+        annots_df = pd.concat([annots_df_pval, annots_df_effect])
+
+    order = {annots_df.index[i]:i for i in range(len(annots_df))}
+
     data_vecs_df = data_vecs_df.reset_index().set_index(['Species', 'Contig', 'Position']).loc[annots_df.index]
     data_vecs_df = data_vecs_df.reset_index().set_index(['Species', 'Contig', 'Position', samples_inds])
 
@@ -211,17 +219,17 @@ def plot_top_four_snps(phen, workdir, data_file_suffix='', samples_inds='SampleN
     fig, axs = plt.subplots(1, 4, figsize=(8.3, 2.7), gridspec_kw={'wspace': .5})
 
     stats_annots = True
-    for i, gr in enumerate(data_vecs_df.groupby(['Species', 'Contig', 'Position'])):
-        species_name = get_segal_species_label(gr[0][0], tax_df)
-        snp_label = create_snp_label(annots_df.loc[gr[0]], species_cont_pos=gr[0], taxonomy=species_name,
+    for rep, gr in data_vecs_df.groupby(['Species', 'Contig', 'Position']):  #rep = (species, contig, pos)
+        species_name = get_segal_species_label(rep[0], tax_df)
+        snp_label = create_snp_label(annots_df.loc[rep], species_cont_pos=rep, taxonomy=species_name,
                                      gene_annot_col='gene') #TODO: 'gene' / 'product'?
-        plt_binary_maf_plus_absent_species(gr, y=y, ax=axs[i], phen=phen, title_fs=6,
+        plt_binary_maf_plus_absent_species((rep, gr), y=y, ax=axs[order[rep]], phen=phen, title_fs=6,
                                            snp_label=snp_label, samples_inds=samples_inds, stats=stats_annots)
 
     if stats_annots:
-        plt.savefig(output_dir.joinpath(f'Top_four_SNPs_annot.png'), dpi=DPI, bbox_inches='tight')
+        plt.savefig(output_dir.joinpath(f'Top_four_SNPs_by_{by}_annot_fs.png'), dpi=DPI, bbox_inches='tight')
     else:
-        plt.savefig(output_dir.joinpath(f'Top_four_SNPs.png'), dpi=DPI, bbox_inches='tight')
+        plt.savefig(output_dir.joinpath(f'Top_four_SNPs_by_{by}.png'), dpi=DPI, bbox_inches='tight')
     plt.close(fig)
     return
 
