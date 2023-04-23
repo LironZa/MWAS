@@ -15,9 +15,6 @@ from LabData.DataAnalyses.MBSNPs.Plots.summary_plot import SummaryDrawer
 from LabData.DataAnalyses.MBSNPs.Plots.species_snps import SpeciesSNPsDrawer
 from LabData.DataMergers.MultiDataLoader import MultiDataLoader
 # from LabData.DataAnalyses.MBSNPs.Plots.pairwise_dists_plot import PairwiseDistsDrawer
-#TODO: change back!!!!!!
-# from LabData.DataAnalyses.MBSNPs.Plots.MWASPaper.modified_copy_species_snps import SpeciesSNPsDrawer
-
 from LabData.DataAnalyses.MBSNPs.annotationist import Annotationist
 from LabData.DataAnalyses.MBSNPs.taxonomy import taxonomy_df
 from LabData.DataLoaders.GeneAnnotLoader import GeneAnnotLoader, ANNOTS_03_2020_EXPANDED_NEW
