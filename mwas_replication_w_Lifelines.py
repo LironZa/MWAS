@@ -115,7 +115,7 @@ def merge_discovery_replication(lifelines_mwas_name='20221027_110736_mwas_bmi_li
 
     # merge tables
     merged = dis.merge(rep, how='left', left_index=True, right_index=True, suffixes=('', '_lifelines'))
-    merged['replicated'] = (merged['Global_Bonferroni_lifelines'] <= .05)
+    merged['replicated'] = (merged['Global_Bonferroni_lifelines'] <= .05) & (np.sign(merged['Coef_lifelines']) == np.sign(merged['Coef']))
     print(merged)
 
     # save in the mwas dir
