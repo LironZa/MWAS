@@ -12,7 +12,9 @@ FIGS_DIR = BASE_DIR.joinpath('Figures', 'species_composition')
 FIGS_DIR.mkdir(parents=True, exist_ok=True)
 
 MB_ABUNDANCE_DF_P = BASE_DIR.joinpath('MWAS_robust_samples_list/BasicMWAS_10K_singleSamplePerReg_20223003_234555_mb_species_abundance.csv')
+LFS_MB_ABUNDANCE_DF_P = BASE_DIR.joinpath('MWAS_robust_samples_list/lifelines_data_20222010_140759_mb_species_abundance.csv')
 ROBUST_SAMPLES_DF_P = BASE_DIR.joinpath('MWAS_robust_samples_list/BasicMWAS_10K_singleSamplePerReg_20223003_234555.csv')
+LFS_ROBUST_SAMPLES_DF_P = BASE_DIR.joinpath('MWAS_robust_samples_list/lifelines_data_20222010_140759.csv')
 
 
 def test_one_phen_all_species(phen, mb_gwas_df_p, name=''):
@@ -71,6 +73,40 @@ def test_one_phen_all_species(phen, mb_gwas_df_p, name=''):
     results.to_csv(FIGS_DIR.joinpath(f'species_composition_{name}_{phen}.csv'))
     return
 
+def test_one_phen_all_species_replication(phen, mb_gwas_df_p, name=''):
+    # for the phenotype, choose the species to test -- load the mb_gwas.h5, filter for Bon<.05, and take list of species
+    phen_df = pd.read_csv(mb_gwas_df_p)
+    phen_df = phen_df.loc[phen_df['replicated'] == True]
+    sig_species = phen_df.groupby('Species').size()
+
+    # load the species composition table of our robust samples list
+    species_composition = pd.read_csv(LFS_MB_ABUNDANCE_DF_P, index_col=0)
+    phenotypes = pd.read_csv(LFS_ROBUST_SAMPLES_DF_P, index_col=0)
+
+    # for each phenotype, for each species in its list, run an association test
+    # put the results in one table, add a column of Bonferroni correction.
+    results = pd.DataFrame(index=sig_species.index)
+
+    ### correlation of species relative abundance & phenotype, including samples with zero abundance
+    if name == 'log10abundance' or name == 'log10abundance_lifelines':
+        for species_id in sig_species.index:
+            abundance = species_composition[species_id]
+            phen_w_bac = phenotypes.loc[abundance.index, phen].dropna()
+            abundance = abundance.loc[phen_w_bac.index]
+            log10abundance = np.log10(abundance)
+            results.loc[species_id, f'pval_{phen}'] = stats.spearmanr(phen_w_bac, log10abundance).pvalue
+
+
+    num_hypotheses = len(sig_species)
+    results[f'bonferroni_{phen}'] = results.apply(lambda x: x[f'pval_{phen}']*num_hypotheses, axis=1)
+
+    tax_df = taxonomy_df(level_as_numbers=False).set_index('SGB')[['Species']].rename(columns={'Species': 'taxa'})
+    results = results.join(tax_df, on='Species')
+
+    print(results.sort_values(f'bonferroni_{phen}'))
+    results.to_csv(FIGS_DIR.joinpath(f'species_composition_{name}_{phen}_lifelines.csv'))
+    return
+
 
 def plot_associated_species():
     # load the results of associated species
@@ -108,8 +144,5 @@ def plot_associated_species():
 
 if __name__ == '__main__':
     name = 'log10abundance'
-
-    mb_gwas_df_p = BASE_DIR.joinpath('20220402_234043_mwas_bmi_10K', 'mb_gwas.h5')
-    test_one_phen_all_species('bmi', mb_gwas_df_p, name=name)
 
 
