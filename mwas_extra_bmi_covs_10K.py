@@ -6,7 +6,6 @@ import numpy as np
 from pandas import Timedelta
 import re
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 from LabData.DataLoaders.Loader import LoaderData
 from LabData.DataAnalyses.MBSNPs.MWAS import CommonParams
