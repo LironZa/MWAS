@@ -62,17 +62,43 @@ def plot_cohort_phenotypes():
         # trend
         b, a = np.polyfit(sub_df['age'].values, sub_df['bmi'].values, deg=1)
         xseq = np.linspace(sub_df['age'].min(), sub_df['age'].max(), num=100)
-        ax.plot(xseq, a + b * xseq, color=color, lw=1, zorder=2)
+        ax.plot(xseq, a + b * xseq, color=color, lw=1, zorder=2);
+        print(color, a, b)
         return
 
+    def linear_reg(sub_df, color):
+        import statsmodels.api as sm
+        # Prepare the data
+        X = sub_df['age']
+        y = sub_df['bmi']
+        X = sm.add_constant(X)  # Adds a constant term to the predictor
+
+        # Fit regression model
+        model = sm.OLS(y, X)
+        results = model.fit()
+
+        # Print out the statistics
+        print(results.params)
+        print(results.pvalues)
+
+
     plot_corr(ax[2], fe, fe_c)
+    linear_reg(fe, fe_c)
     plot_corr(ax[2], ma, ma_c)
+    linear_reg(ma, ma_c)
+
     ax[2].set_xlabel('Age, years', fontsize=fsize)
     ax[2].set_ylabel('BMI, points', fontsize=fsize)
     ax[2].tick_params(axis='both', labelsize=fsize)
 
     # save
-    plt.savefig(FIGS_DIR.joinpath(ROBUST_DATA_TABLE_NAME.split('.')[0] + f"_phenotypes.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(FIGS_DIR.joinpath(ROBUST_DATA_TABLE_NAME.split('.')[0] + f"_phenotypes.pdf"), bbox_inches='tight')
+    plt.savefig(FIGS_DIR.joinpath(ROBUST_DATA_TABLE_NAME.split('.')[0] + f"_phenotypes.jpeg"), bbox_inches='tight')
+    # plt.savefig(FIGS_DIR.joinpath(ROBUST_DATA_TABLE_NAME.split('.')[0] + f"_phenotypes.png"), dpi=300, bbox_inches='tight')
     plt.close(fig)
     return
 
+
+
+if __name__ == '__main__':
+    plot_cohort_phenotypes()
